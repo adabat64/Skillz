@@ -13,7 +13,7 @@ function App() {
 
   useEffect(() => {
     if (!hasAddedInitialTree.current) {
-      console.log("Adding initial skill tree");
+      console.log("useEffect - Adding initial skill tree");
       addSkillTree(); // Add a default skill tree when the app loads only if there are no existing skill trees.
       hasAddedInitialTree.current = true; // Set the flag to true to avoid adding again
     }
@@ -21,17 +21,26 @@ function App() {
 
   // Add a new skill tree with a single default node
   const addSkillTree = () => {
+    console.log("addSkillTree - Adding a new skill tree");
     const newTree = {
       id: skillTrees.length + 1,
       name: `Skill Tree ${skillTrees.length + 1}`,
       nodes: [{ id: 1, label: 'Skill 1', children: [] }],
     };
-    setSkillTrees((prevTrees) => [...prevTrees, newTree]);
+    setSkillTrees((prevTrees) => {
+      console.log("addSkillTree - Updated skillTrees state", [...prevTrees, newTree]);
+      return [...prevTrees, newTree];
+    });
   };
 
   // Add a new child node to the selected parent node
   const handleAddNode = (parentId) => {
-    if (!viewState.selectedTree) return;
+    if (!viewState.selectedTree) {
+      console.warn("handleAddNode - No selected tree found!");
+      return;
+    }
+
+    console.log(`handleAddNode - Adding new node under parent node ID: ${parentId}`);
 
     setSkillTrees((prevTrees) => {
       const updatedTrees = prevTrees.map((tree) => {
@@ -41,20 +50,28 @@ function App() {
         }
         return tree;
       });
+
+      console.log("handleAddNode - Updated skillTrees after adding node", updatedTrees);
+
+      // Update viewState immediately based on updated skillTrees
+      const updatedSelectedTree = updatedTrees.find((tree) => tree.id === viewState.selectedTree.id);
+      setViewState((prevState) => ({
+        ...prevState,
+        selectedTree: updatedSelectedTree,
+      }));
+
       return updatedTrees;
     });
 
-    setNextNodeId((prevId) => prevId + 1);
-
-    // Update the selected tree
-    setViewState((prevState) => ({
-      ...prevState,
-      selectedTree: skillTrees.find((tree) => tree.id === viewState.selectedTree.id),
-    }));
+    setNextNodeId((prevId) => {
+      console.log(`handleAddNode - Updating nextNodeId to: ${prevId + 1}`);
+      return prevId + 1;
+    });
   };
 
   // Recursive function to add a new node to the tree
   const addNodeToTree = (nodes, parentId) => {
+    console.log("addNodeToTree - Adding node to tree structure", { nodes, parentId });
     return nodes.map((node) => {
       if (node.id === parentId) {
         const newNode = {
@@ -62,6 +79,7 @@ function App() {
           label: `Skill ${nextNodeId}`,
           children: [],
         };
+        console.log(`addNodeToTree - Adding new child node: ${newNode.label} under parent node ID: ${parentId}`);
         return { ...node, children: [...node.children, newNode] };
       }
       return { ...node, children: addNodeToTree(node.children, parentId) };
@@ -70,11 +88,13 @@ function App() {
 
   // Select a tree to view
   const handleSelectTree = (tree) => {
+    console.log("handleSelectTree - Selecting tree:", tree);
     setViewState({ depth: 2, selectedTree: tree });
   };
 
   // Go back to the main menu
   const goBack = () => {
+    console.log("goBack - Returning to main menu");
     setViewState({ depth: 1, selectedTree: null });
   };
 
