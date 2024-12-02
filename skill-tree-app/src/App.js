@@ -1,83 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SkillTree from './components/SkillTree';
 import './App.css';
 import backgroundImage from './assets/space-background.jpg';
 
 function App() {
   const [skillTrees, setSkillTrees] = useState([]);
-  const [currentTreeIndex, setCurrentTreeIndex] = useState(null);
+  const [viewState, setViewState] = useState({ depth: 1, selectedTree: null });
+  const [nextNodeId, setNextNodeId] = useState(2);
 
+  // Ref to track if the initial tree has been added
+  const hasAddedInitialTree = useRef(false);
+
+  useEffect(() => {
+    if (!hasAddedInitialTree.current) {
+      console.log("Adding initial skill tree");
+      addSkillTree(); // Add a default skill tree when the app loads only if there are no existing skill trees.
+      hasAddedInitialTree.current = true; // Set the flag to true to avoid adding again
+    }
+  }, []); // Empty dependency array ensures this runs only once.
+
+  // Add a new skill tree with a single default node
   const addSkillTree = () => {
     const newTree = {
+      id: skillTrees.length + 1,
       name: `Skill Tree ${skillTrees.length + 1}`,
-      nodes: [
-        {
-          id: 1,
-          label: 'Skill 1',
-          children: [],
-        },
-      ],
+      nodes: [{ id: 1, label: 'Skill 1', children: [] }],
     };
     setSkillTrees((prevTrees) => [...prevTrees, newTree]);
-    setCurrentTreeIndex(skillTrees.length);
   };
 
-  const handleSkillTreeEvent = (eventType, data) => {
-    if (currentTreeIndex === null) return;
+  // Add a new child node to the selected parent node
+  const handleAddNode = (parentId) => {
+    if (!viewState.selectedTree) return;
 
     setSkillTrees((prevTrees) => {
-      const updatedTrees = prevTrees.map((tree, index) => {
-        if (index === currentTreeIndex) {
-          switch (eventType) {
-            case 'ADD_BRANCH':
-              const { parentId, direction } = data;
-              const updatedNodes = addBranchToNodes(tree.nodes, parentId, direction);
-              return {
-                ...tree,
-                nodes: updatedNodes,
-              };
-            case 'EDIT_TREE_NAME':
-              return {
-                ...tree,
-                name: data.newName,
-              };
-            default:
-              return tree;
-          }
+      const updatedTrees = prevTrees.map((tree) => {
+        if (tree.id === viewState.selectedTree.id) {
+          const updatedNodes = addNodeToTree(tree.nodes, parentId);
+          return { ...tree, nodes: updatedNodes };
         }
         return tree;
       });
       return updatedTrees;
     });
+
+    setNextNodeId((prevId) => prevId + 1);
+
+    // Update the selected tree
+    setViewState((prevState) => ({
+      ...prevState,
+      selectedTree: skillTrees.find((tree) => tree.id === viewState.selectedTree.id),
+    }));
   };
 
-  const addBranchToNodes = (nodes, parentId, direction) => {
+  // Recursive function to add a new node to the tree
+  const addNodeToTree = (nodes, parentId) => {
     return nodes.map((node) => {
-      if (node.id === parentId && node.children.length < 3) {
-        const newChild = {
-          id: nodes.length + node.children.length + 1,
-          label: `Skill ${nodes.length + node.children.length + 1}`,
-          direction: direction,
+      if (node.id === parentId) {
+        const newNode = {
+          id: nextNodeId,
+          label: `Skill ${nextNodeId}`,
           children: [],
         };
-        return {
-          ...node,
-          children: [...node.children, newChild],
-        };
-      } else if (node.children.length > 0) {
-        return {
-          ...node,
-          children: addBranchToNodes(node.children, parentId, direction),
-        };
+        return { ...node, children: [...node.children, newNode] };
       }
-      return node;
+      return { ...node, children: addNodeToTree(node.children, parentId) };
     });
   };
 
-  useEffect(() => {
-    // Add a default skill tree when the component mounts
-    addSkillTree();
-  }, []);
+  // Select a tree to view
+  const handleSelectTree = (tree) => {
+    setViewState({ depth: 2, selectedTree: tree });
+  };
+
+  // Go back to the main menu
+  const goBack = () => {
+    setViewState({ depth: 1, selectedTree: null });
+  };
 
   return (
     <div
@@ -87,37 +86,28 @@ function App() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         padding: '20px',
       }}
     >
-      <div className='header'>
-        <h1>Skill Tree App</h1>
-      </div>
-      <div className='skill-tree-content'>
-        {currentTreeIndex !== null && (
+      {viewState.depth === 1 ? (
+        <div className='skill-tree-menu'>
+          <h1>Skill Tree Menu</h1>
+          {skillTrees.map((tree) => (
+            <button key={tree.id} onClick={() => handleSelectTree(tree)}>
+              {tree.name}
+            </button>
+          ))}
+          <button onClick={addSkillTree}>Add New Skill Tree</button>
+        </div>
+      ) : (
+        viewState.selectedTree && (
           <SkillTree
-            treeName={skillTrees[currentTreeIndex].name}
-            nodes={skillTrees[currentTreeIndex].nodes}
-            onAddBranch={(parentId, direction) => handleSkillTreeEvent('ADD_BRANCH', { parentId, direction })}
-            onEditTreeName={(newName) => handleSkillTreeEvent('EDIT_TREE_NAME', { newName })}
+            tree={viewState.selectedTree}
+            onAddNode={handleAddNode}
+            onBack={goBack}
           />
-        )}
-      </div>
-      <div className='skill-trees-list'>
-        {skillTrees.map((tree, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentTreeIndex(index)}
-            className='skill-tree-button'
-          >
-            {tree.name}
-          </button>
-        ))}
-      </div>
+        )
+      )}
     </div>
   );
 }
