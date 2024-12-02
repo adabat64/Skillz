@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SkillTree from './components/SkillTree';
 import './App.css';
 import backgroundImage from './assets/space-background.jpg';
@@ -10,7 +10,13 @@ function App() {
   const addSkillTree = () => {
     const newTree = {
       name: `Skill Tree ${skillTrees.length + 1}`,
-      nodes: [],
+      nodes: [
+        {
+          id: 1,
+          label: 'Skill 1',
+          children: [],
+        },
+      ],
     };
     setSkillTrees((prevTrees) => [...prevTrees, newTree]);
     setCurrentTreeIndex(skillTrees.length);
@@ -23,28 +29,12 @@ function App() {
       const updatedTrees = prevTrees.map((tree, index) => {
         if (index === currentTreeIndex) {
           switch (eventType) {
-            case 'ADD_NODE':
-              const newNode = {
-                id: tree.nodes.length + 1,
-                label: `Skill ${tree.nodes.length + 1}`,
-              };
+            case 'ADD_BRANCH':
+              const { parentId, direction } = data;
+              const updatedNodes = addBranchToNodes(tree.nodes, parentId, direction);
               return {
                 ...tree,
-                nodes: [...tree.nodes, newNode],
-              };
-            case 'DELETE_NODE':
-              const filteredNodes = tree.nodes.filter((node) => node.id !== data.nodeId);
-              return {
-                ...tree,
-                nodes: filteredNodes,
-              };
-            case 'EDIT_NODE':
-              const editedNodes = tree.nodes.map((node) =>
-                node.id === data.nodeId ? { ...node, label: data.newLabel } : node
-              );
-              return {
-                ...tree,
-                nodes: editedNodes,
+                nodes: updatedNodes,
               };
             case 'EDIT_TREE_NAME':
               return {
@@ -60,6 +50,34 @@ function App() {
       return updatedTrees;
     });
   };
+
+  const addBranchToNodes = (nodes, parentId, direction) => {
+    return nodes.map((node) => {
+      if (node.id === parentId && node.children.length < 3) {
+        const newChild = {
+          id: nodes.length + node.children.length + 1,
+          label: `Skill ${nodes.length + node.children.length + 1}`,
+          direction: direction,
+          children: [],
+        };
+        return {
+          ...node,
+          children: [...node.children, newChild],
+        };
+      } else if (node.children.length > 0) {
+        return {
+          ...node,
+          children: addBranchToNodes(node.children, parentId, direction),
+        };
+      }
+      return node;
+    });
+  };
+
+  useEffect(() => {
+    // Add a default skill tree when the component mounts
+    addSkillTree();
+  }, []);
 
   return (
     <div
@@ -78,18 +96,13 @@ function App() {
     >
       <div className='header'>
         <h1>Skill Tree App</h1>
-        <button className='add-skill-tree-button' onClick={addSkillTree}>
-          Add Skill Tree
-        </button>
       </div>
       <div className='skill-tree-content'>
         {currentTreeIndex !== null && (
           <SkillTree
             treeName={skillTrees[currentTreeIndex].name}
             nodes={skillTrees[currentTreeIndex].nodes}
-            onAddNode={() => handleSkillTreeEvent('ADD_NODE')}
-            onDeleteNode={(nodeId) => handleSkillTreeEvent('DELETE_NODE', { nodeId })}
-            onEditNode={(nodeId, newLabel) => handleSkillTreeEvent('EDIT_NODE', { nodeId, newLabel })}
+            onAddBranch={(parentId, direction) => handleSkillTreeEvent('ADD_BRANCH', { parentId, direction })}
             onEditTreeName={(newName) => handleSkillTreeEvent('EDIT_TREE_NAME', { newName })}
           />
         )}

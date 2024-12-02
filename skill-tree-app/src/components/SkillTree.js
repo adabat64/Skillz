@@ -1,16 +1,9 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { faStar, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import './SkillTree.css';
 
-function SkillTree({ treeName, nodes, onAddNode, onDeleteNode, onEditNode, onEditTreeName }) {
-  const handleEditNode = (nodeId) => {
-    const newLabel = prompt('Enter new label for the skill node:');
-    if (newLabel && newLabel.trim() !== '') {
-      onEditNode(nodeId, newLabel);
-    }
-  };
-
+function SkillTree({ treeName, nodes, onAddBranch, onEditTreeName }) {
   const handleEditTreeName = () => {
     const newName = prompt('Enter new name for the skill tree:');
     if (newName && newName.trim() !== '') {
@@ -18,23 +11,31 @@ function SkillTree({ treeName, nodes, onAddNode, onDeleteNode, onEditNode, onEdi
     }
   };
 
+  const handleAddBranch = (parentId, direction) => {
+    onAddBranch(parentId, direction);
+  };
+
+  const renderNodes = (nodes) => {
+    return nodes.map((node) => (
+      <div key={node.id} className={`node tree-node ${node.direction || ''}`}>
+        <FontAwesomeIcon icon={faStar} className='node-icon' />
+        <span className='node-label'>{node.label}</span>
+        <div className='add-branch-buttons'>
+          <FontAwesomeIcon icon={faPlusCircle} className='add-branch-button' onClick={() => handleAddBranch(node.id, 'left')} />
+          <FontAwesomeIcon icon={faPlusCircle} className='add-branch-button' onClick={() => handleAddBranch(node.id, 'right')} />
+          <FontAwesomeIcon icon={faPlusCircle} className='add-branch-button' onClick={() => handleAddBranch(node.id, 'center')} />
+        </div>
+        {node.children.length > 0 && <div className='children-container'>{renderNodes(node.children)}</div>}
+      </div>
+    ));
+  };
+
   return (
     <div className='skill-tree-container'>
       <div className='nodes-container tree-layout'>
-        {[...nodes].reverse().map((node) => (
-          <div key={node.id} className='node tree-node'>
-            <FontAwesomeIcon icon={faStar} className='node-icon' />
-            <span onClick={() => handleEditNode(node.id)} className='node-label'>
-              {node.label}
-            </span>
-            <button className='delete-node-button' onClick={() => onDeleteNode(node.id)}>Delete</button>
-          </div>
-        ))}
+        {renderNodes(nodes)}
       </div>
       <h2 onClick={handleEditTreeName} className='tree-name-label'>{treeName}</h2>
-      <button className='add-node-button' onClick={onAddNode}>
-        Add Skill Node
-      </button>
     </div>
   );
 }
