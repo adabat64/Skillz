@@ -1,3 +1,5 @@
+/* Updated Node.css for Simpler Styling */
+
 /* Node Layout */
 .node-container {
   display: flex;
@@ -7,26 +9,20 @@
 }
 
 .node {
-  background-color: #3e3e3e;
-  padding: 20px;
-  border-radius: 50%;
-  text-align: center;
-  border: 2px solid #ffd700;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+  color: #ffffff;
+  font-size: 1.2rem;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  margin-bottom: 10px;
 }
 
 .node-label {
-  color: #fff;
-  font-size: 1rem;
-  margin-bottom: 10px;
+  margin-right: 10px;
 }
 
 .add-node-button {
   cursor: pointer;
-  color: #ffd700;
+  color: #ffffff;
   font-size: 1.5rem;
   transition: transform 0.2s;
 }

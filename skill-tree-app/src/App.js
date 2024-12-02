@@ -7,6 +7,9 @@ function App() {
   const [skillTrees, setSkillTrees] = useState([]);
   const [viewState, setViewState] = useState({ depth: 1, selectedTree: null });
   const [nextNodeId, setNextNodeId] = useState(2);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [currentTreeToRename, setCurrentTreeToRename] = useState(null);
+  const [newTreeName, setNewTreeName] = useState('');
 
   // Ref to track if the initial tree has been added
   const hasAddedInitialTree = useRef(false);
@@ -31,6 +34,29 @@ function App() {
       console.log("addSkillTree - Updated skillTrees state", [...prevTrees, newTree]);
       return [...prevTrees, newTree];
     });
+  };
+
+  // Open the rename modal
+  const openRenameModal = (tree) => {
+    setCurrentTreeToRename(tree);
+    setNewTreeName(tree.name);
+    setIsRenameModalOpen(true);
+  };
+
+  // Handle renaming of the skill tree
+  const handleRenameTree = () => {
+    if (!currentTreeToRename) return;
+
+    setSkillTrees((prevTrees) => {
+      const updatedTrees = prevTrees.map((tree) =>
+        tree.id === currentTreeToRename.id ? { ...tree, name: newTreeName } : tree
+      );
+      return updatedTrees;
+    });
+
+    // Close the modal
+    setIsRenameModalOpen(false);
+    setCurrentTreeToRename(null);
   };
 
   // Add a new child node to the selected parent node
@@ -113,9 +139,9 @@ function App() {
         <div className='skill-tree-menu'>
           <h1>Skill Tree Menu</h1>
           {skillTrees.map((tree) => (
-            <button key={tree.id} onClick={() => handleSelectTree(tree)}>
-              {tree.name}
-            </button>
+            <div key={tree.id} className="skill-tree-item">
+              <button onClick={() => handleSelectTree(tree)}>{tree.name}</button>
+            </div>
           ))}
           <button onClick={addSkillTree}>Add New Skill Tree</button>
         </div>
@@ -125,8 +151,24 @@ function App() {
             tree={viewState.selectedTree}
             onAddNode={handleAddNode}
             onBack={goBack}
+            onRename={() => openRenameModal(viewState.selectedTree)}
           />
         )
+      )}
+
+      {isRenameModalOpen && (
+        <div className='rename-modal'>
+          <div className='modal-content'>
+            <h3>Rename Skill Tree</h3>
+            <input
+              type='text'
+              value={newTreeName}
+              onChange={(e) => setNewTreeName(e.target.value)}
+            />
+            <button onClick={handleRenameTree}>Save</button>
+            <button onClick={() => setIsRenameModalOpen(false)}>Cancel</button>
+          </div>
+        </div>
       )}
     </div>
   );
