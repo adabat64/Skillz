@@ -1,0 +1,11 @@
+/* App.css */
+body {
+  background: linear-gradient(135deg, #6e6e6e, #222);
+  font-family: Arial, sans-serif;
+  color: #ffffff;
+}
+
+.App {
+  text-align: center;
+  padding: 20px;
+}

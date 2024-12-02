@@ -1,0 +1,41 @@
+/* Tree Layout */
+.tree-layout {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  position: relative;
+}
+
+.tree-node {
+  position: relative;
+  background-color: #3e3e3e;
+  padding: 20px;
+  border-radius: 50%;
+  text-align: center;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.tree-node:hover {
+  transform: scale(1.1);
+}
+
+.tree-node::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 100px;
+  background-color: #ffd700;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: -1;
+}
+
+.nodes-container .node:last-child::after {
+  display: none;
+}
+
+/* Connect nodes in a tree layout */
