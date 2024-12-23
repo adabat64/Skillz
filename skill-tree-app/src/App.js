@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import SkillTree from './components/SkillTree';
+import SkillTreeView from './components/SkillTreeView';
+import RenameModal from './components/RenameModal';
+import { addNodeToTree, renameSkillInTree } from './utils/treeUtils';
 import './App.css';
 import backgroundImage from './assets/space-background.jpg';
 
@@ -10,77 +12,43 @@ function App() {
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [currentTreeToRename, setCurrentTreeToRename] = useState(null);
   const [newTreeName, setNewTreeName] = useState('');
+  const [isRenameSkillModalOpen, setIsRenameSkillModalOpen] = useState(false);
+  const [currentSkillToRename, setCurrentSkillToRename] = useState(null);
+  const [newSkillName, setNewSkillName] = useState('');
 
-  // Ref to track if the initial tree has been added
   const hasAddedInitialTree = useRef(false);
 
   useEffect(() => {
     if (!hasAddedInitialTree.current) {
-      console.log("useEffect - Adding initial skill tree");
-      addSkillTree(); // Add a default skill tree when the app loads only if there are no existing skill trees.
-      hasAddedInitialTree.current = true; // Set the flag to true to avoid adding again
+      addSkillTree();
+      hasAddedInitialTree.current = true;
     }
-  }, []); // Empty dependency array ensures this runs only once.
+  }, []);
 
-  // Add a new skill tree with a single default node
   const addSkillTree = () => {
-    console.log("addSkillTree - Adding a new skill tree");
     const newTree = {
       id: skillTrees.length + 1,
       name: `Skill Tree ${skillTrees.length + 1}`,
       nodes: [{ id: 1, label: 'Skill 1', children: [] }],
     };
-    setSkillTrees((prevTrees) => {
-      console.log("addSkillTree - Updated skillTrees state", [...prevTrees, newTree]);
-      return [...prevTrees, newTree];
-    });
+    setSkillTrees((prevTrees) => [...prevTrees, newTree]);
   };
 
-  // Open the rename modal
-  const openRenameModal = (tree) => {
-    setCurrentTreeToRename(tree);
-    setNewTreeName(tree.name);
-    setIsRenameModalOpen(true);
-  };
-
-  // Handle renaming of the skill tree
-  const handleRenameTree = () => {
-    if (!currentTreeToRename) return;
-
-    setSkillTrees((prevTrees) => {
-      const updatedTrees = prevTrees.map((tree) =>
-        tree.id === currentTreeToRename.id ? { ...tree, name: newTreeName } : tree
-      );
-      return updatedTrees;
-    });
-
-    // Close the modal
-    setIsRenameModalOpen(false);
-    setCurrentTreeToRename(null);
-  };
-
-  // Add a new child node to the selected parent node
   const handleAddNode = (parentId) => {
-    if (!viewState.selectedTree) {
-      console.warn("handleAddNode - No selected tree found!");
-      return;
-    }
-
-    console.log(`handleAddNode - Adding new node under parent node ID: ${parentId}`);
+    if (!viewState.selectedTree) return;
 
     setSkillTrees((prevTrees) => {
       const updatedTrees = prevTrees.map((tree) => {
         if (tree.id === viewState.selectedTree.id) {
-          const updatedNodes = addNodeToTree(tree.nodes, parentId);
+          const updatedNodes = addNodeToTree(tree.nodes, parentId, nextNodeId);
           return { ...tree, nodes: updatedNodes };
         }
         return tree;
       });
 
-      console.log("handleAddNode - Updated skillTrees after adding node", updatedTrees);
-
-      // Update viewState immediately based on updated skillTrees
-      const updatedSelectedTree = updatedTrees.find((tree) => tree.id === viewState.selectedTree.id);
+      const updatedSelectedTree = updatedTrees.find(
+        (tree) => tree.id === viewState.selectedTree.id
+      );
       setViewState((prevState) => ({
         ...prevState,
         selectedTree: updatedSelectedTree,
@@ -89,38 +57,77 @@ function App() {
       return updatedTrees;
     });
 
-    setNextNodeId((prevId) => {
-      console.log(`handleAddNode - Updating nextNodeId to: ${prevId + 1}`);
-      return prevId + 1;
-    });
+    setNextNodeId((prevId) => prevId + 1);
   };
 
-  // Recursive function to add a new node to the tree
-  const addNodeToTree = (nodes, parentId) => {
-    console.log("addNodeToTree - Adding node to tree structure", { nodes, parentId });
-    return nodes.map((node) => {
-      if (node.id === parentId) {
-        const newNode = {
-          id: nextNodeId,
-          label: `Skill ${nextNodeId}`,
-          children: [],
-        };
-        console.log(`addNodeToTree - Adding new child node: ${newNode.label} under parent node ID: ${parentId}`);
-        return { ...node, children: [...node.children, newNode] };
-      }
-      return { ...node, children: addNodeToTree(node.children, parentId) };
-    });
+  const openRenameSkillModal = (skill) => {
+    setCurrentSkillToRename(skill);
+    setNewSkillName(skill.label);
+    setIsRenameSkillModalOpen(true);
   };
 
-  // Select a tree to view
+  const handleRenameSkill = () => {
+    if (!currentSkillToRename || !viewState.selectedTree) return;
+
+    setSkillTrees((prevTrees) => {
+      const updatedTrees = prevTrees.map((tree) => {
+        if (tree.id === viewState.selectedTree.id) {
+          const updatedNodes = renameSkillInTree(tree.nodes, currentSkillToRename.id, newSkillName);
+          return { ...tree, nodes: updatedNodes };
+        }
+        return tree;
+      });
+
+      const updatedSelectedTree = updatedTrees.find(
+        (tree) => tree.id === viewState.selectedTree.id
+      );
+      setViewState((prevState) => ({
+        ...prevState,
+        selectedTree: updatedSelectedTree,
+      }));
+
+      return updatedTrees;
+    });
+
+    setIsRenameSkillModalOpen(false);
+    setCurrentSkillToRename(null);
+  };
+
+  const openRenameModal = (tree) => {
+    setCurrentTreeToRename(tree);
+    setNewTreeName(tree.name);
+    setIsRenameModalOpen(true);
+  };
+
+  const handleRenameTree = () => {
+    if (!currentTreeToRename) return;
+
+    setSkillTrees((prevTrees) => {
+      const updatedTrees = prevTrees.map((tree) =>
+        tree.id === currentTreeToRename.id ? { ...tree, name: newTreeName } : tree
+      );
+
+      const updatedSelectedTree = updatedTrees.find(
+        (tree) => tree.id === currentTreeToRename.id
+      );
+
+      setViewState((prevState) => ({
+        ...prevState,
+        selectedTree: updatedSelectedTree,
+      }));
+
+      return updatedTrees;
+    });
+
+    setIsRenameModalOpen(false);
+    setCurrentTreeToRename(null);
+  };
+
   const handleSelectTree = (tree) => {
-    console.log("handleSelectTree - Selecting tree:", tree);
     setViewState({ depth: 2, selectedTree: tree });
   };
 
-  // Go back to the main menu
   const goBack = () => {
-    console.log("goBack - Returning to main menu");
     setViewState({ depth: 1, selectedTree: null });
   };
 
@@ -137,7 +144,7 @@ function App() {
     >
       {viewState.depth === 1 ? (
         <div className='skill-tree-menu'>
-          <h1>Skill Tree Menu</h1>
+          <h1 className='app-title'>Skill Tree</h1>
           {skillTrees.map((tree) => (
             <div key={tree.id} className="skill-tree-item">
               <button onClick={() => handleSelectTree(tree)}>{tree.name}</button>
@@ -147,28 +154,34 @@ function App() {
         </div>
       ) : (
         viewState.selectedTree && (
-          <SkillTree
+          <SkillTreeView
             tree={viewState.selectedTree}
-            onAddNode={handleAddNode}
             onBack={goBack}
-            onRename={() => openRenameModal(viewState.selectedTree)}
+            onRenameTree={() => openRenameModal(viewState.selectedTree)}
+            onAddNode={handleAddNode}
+            onRenameSkill={openRenameSkillModal}
           />
         )
       )}
 
       {isRenameModalOpen && (
-        <div className='rename-modal'>
-          <div className='modal-content'>
-            <h3>Rename Skill Tree</h3>
-            <input
-              type='text'
-              value={newTreeName}
-              onChange={(e) => setNewTreeName(e.target.value)}
-            />
-            <button onClick={handleRenameTree}>Save</button>
-            <button onClick={() => setIsRenameModalOpen(false)}>Cancel</button>
-          </div>
-        </div>
+        <RenameModal
+          title="Rename Skill Tree"
+          value={newTreeName}
+          onChange={setNewTreeName}
+          onSave={handleRenameTree}
+          onCancel={() => setIsRenameModalOpen(false)}
+        />
+      )}
+
+      {isRenameSkillModalOpen && (
+        <RenameModal
+          title="Rename Skill"
+          value={newSkillName}
+          onChange={setNewSkillName}
+          onSave={handleRenameSkill}
+          onCancel={() => setIsRenameSkillModalOpen(false)}
+        />
       )}
     </div>
   );

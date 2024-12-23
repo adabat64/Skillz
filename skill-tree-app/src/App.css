@@ -1,3 +1,56 @@
+/* General Styles */
+.App {
+  font-family: Arial, sans-serif;
+}
+
+/* App Title Styling */
+.app-title {
+  text-align: center;
+  color: #ffd700;
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+/* Skill Tree Menu */
+.skill-tree-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Skill Tree Item */
+.skill-tree-item {
+  margin: 10px 0;
+}
+
+.skill-tree-item button {
+  padding: 10px 20px;
+  background-color: #3e3e3e;
+  color: #ffd700;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.skill-tree-item button:hover {
+  background-color: #ffd700;
+  color: #3e3e3e;
+  transform: scale(1.05);
+}
+
+/* Add Button */
+.skill-tree-menu button:last-child {
+  margin-top: 20px;
+  background-color: #e0e0e0;
+  color: #3e3e3e;
+}
+
+.skill-tree-menu button:last-child:hover {
+  background-color: #c0c0c0;
+}
+
+/* Modal Styles */
 .rename-modal {
   position: fixed;
   top: 0;
